@@ -11,10 +11,12 @@ from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.user import (
     LoginRequest,
+    RefreshRequest,
     TokenResponse,
     UserResponse,
     UserSignupRequest,
 )
+from jose import JWTError
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -68,3 +70,56 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        decoded = decode_token(payload.refresh_token)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token.",
+        )
+
+    if decoded.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is not a refresh token.",
+        )
+
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.jti == decoded["jti"])
+    )
+    token_record = result.scalar_one_or_none()
+
+    if token_record is None or token_record.revoked:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token has been revoked or does not exist.",
+        )
+
+    if token_record.token_hash != hash_token(payload.refresh_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token mismatch.",
+        )
+
+    # Rotate: revoke the old token
+    token_record.revoked = True
+
+    user_id = token_record.user_id
+    new_access_token = create_access_token(user_id)
+    new_refresh_token = create_refresh_token(user_id)
+
+    decoded_new_refresh = decode_token(new_refresh_token)
+    new_refresh_record = RefreshToken(
+        user_id=user_id,
+        jti=decoded_new_refresh["jti"],
+        token_hash=hash_token(new_refresh_token),
+        expires_at=datetime.fromtimestamp(decoded_new_refresh["exp"], tz=timezone.utc),
+    )
+    db.add(new_refresh_record)
+    await db.commit()
+
+    return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token)
