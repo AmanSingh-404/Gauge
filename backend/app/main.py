@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.auth import router as auth_router
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging, log
@@ -10,6 +11,7 @@ settings = get_settings()
 configure_logging(settings.environment)
 
 app = FastAPI(title=settings.app_name)
+app.include_router(auth_router)
 
 
 @app.get("/health")
