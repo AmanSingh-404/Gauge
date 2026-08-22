@@ -1,24 +1,32 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.jwt import create_access_token, create_refresh_token, decode_token
+from app.core.jwt import (
+    create_access_token,
+    create_email_verification_token,
+    create_password_reset_token,
+    create_refresh_token,
+    decode_token,
+)
+from app.core.mail import send_email
 from app.core.security import hash_password, hash_token, verify_password
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.user import (
+    ForgotPasswordRequest,
     LoginRequest,
     RefreshRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UserResponse,
     UserSignupRequest,
+    VerifyEmailRequest,
 )
-from jose import JWTError
-from app.core.jwt import create_email_verification_token
-from app.core.mail import send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -118,7 +126,6 @@ async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
             detail="Refresh token mismatch.",
         )
 
-    # Rotate: revoke the old token
     token_record.revoked = True
 
     user_id = token_record.user_id
@@ -161,11 +168,9 @@ async def logout(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/verify-email")
-async def verify_email(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    # Reusing RefreshRequest's shape ({"refresh_token": "..."}) isn't ideal here —
-    # we'll add a dedicated schema in the next sub-step. For now this proves the flow.
+async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(get_db)):
     try:
-        decoded = decode_token(payload.refresh_token)
+        decoded = decode_token(payload.token)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -190,3 +195,56 @@ async def verify_email(payload: RefreshRequest, db: AsyncSession = Depends(get_d
     await db.commit()
 
     return {"message": "Email verified successfully."}
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(User).where(User.email == payload.email))
+    user = result.scalar_one_or_none()
+
+    if user is not None:
+        reset_token = create_password_reset_token(user.id)
+        reset_link = f"http://localhost:3000/reset-password?token={reset_token}"
+        await send_email(
+            subject="Reset your Gauge password",
+            recipient=user.email,
+            body=f"<p>Click the link below to reset your password:</p>"
+            f'<p><a href="{reset_link}">{reset_link}</a></p>'
+            f"<p>This link expires in 1 hour.</p>",
+        )
+
+    return {"message": "If that email exists, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    payload: ResetPasswordRequest, db: AsyncSession = Depends(get_db)
+):
+    try:
+        decoded = decode_token(payload.token)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token.",
+        )
+
+    if decoded.get("type") != "password_reset":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token type.",
+        )
+
+    result = await db.execute(select(User).where(User.id == decoded["sub"]))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+
+    user.password_hash = hash_password(payload.new_password)
+    await db.commit()
+
+    return {"message": "Password reset successfully."}

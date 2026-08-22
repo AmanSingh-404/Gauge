@@ -52,3 +52,14 @@ def create_email_verification_token(user_id: uuid.UUID) -> str:
         "iat": datetime.now(timezone.utc),
     }
     return jwt.encode(payload, _PRIVATE_KEY, algorithm=settings.jwt_algorithm)
+
+
+def create_password_reset_token(user_id: uuid.UUID) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    payload = {
+        "sub": str(user_id),
+        "type": "password_reset",
+        "exp": expire,
+        "iat": datetime.now(timezone.utc),
+    }
+    return jwt.encode(payload, _PRIVATE_KEY, algorithm=settings.jwt_algorithm)
