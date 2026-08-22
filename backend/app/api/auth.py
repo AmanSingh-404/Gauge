@@ -123,3 +123,25 @@ async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
     return TokenResponse(access_token=new_access_token, refresh_token=new_refresh_token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        decoded = decode_token(payload.refresh_token)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token.",
+        )
+
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.jti == decoded.get("jti"))
+    )
+    token_record = result.scalar_one_or_none()
+
+    if token_record is not None:
+        token_record.revoked = True
+        await db.commit()
+
+    return None
