@@ -17,6 +17,8 @@ from app.schemas.user import (
     UserSignupRequest,
 )
 from jose import JWTError
+from app.core.jwt import create_email_verification_token
+from app.core.mail import send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -41,6 +43,17 @@ async def signup(payload: UserSignupRequest, db: AsyncSession = Depends(get_db))
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+
+    verification_token = create_email_verification_token(new_user.id)
+    verification_link = f"http://localhost:3000/verify-email?token={verification_token}"
+
+    await send_email(
+        subject="Verify your Gauge account",
+        recipient=new_user.email,
+        body=f"<p>Welcome to Gauge! Click the link below to verify your email:</p>"
+        f'<p><a href="{verification_link}">{verification_link}</a></p>'
+        f"<p>This link expires in 24 hours.</p>",
+    )
 
     return new_user
 
@@ -145,3 +158,35 @@ async def logout(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
         await db.commit()
 
     return None
+
+
+@router.post("/verify-email")
+async def verify_email(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    # Reusing RefreshRequest's shape ({"refresh_token": "..."}) isn't ideal here —
+    # we'll add a dedicated schema in the next sub-step. For now this proves the flow.
+    try:
+        decoded = decode_token(payload.refresh_token)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token.",
+        )
+
+    if decoded.get("type") != "email_verification":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token type.",
+        )
+
+    result = await db.execute(select(User).where(User.id == decoded["sub"]))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found."
+        )
+
+    user.email_verified = True
+    await db.commit()
+
+    return {"message": "Email verified successfully."}
