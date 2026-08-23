@@ -9,7 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.jwt import decode_token
 from app.models.user import User
+import uuid as uuid_module
 
+from fastapi import Path
+from sqlalchemy import select as select_stmt
+
+from app.models.workspace_member import WorkspaceMember
+
+ROLE_HIERARCHY = {"viewer": 0, "editor": 1, "owner": 2}
 security = HTTPBearer()
 
 
@@ -42,3 +49,34 @@ async def get_current_user(
         )
 
     return user
+
+
+def require_workspace_role(minimum_role: str):
+    async def dependency(
+        workspace_id: uuid_module.UUID = Path(...),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+    ) -> WorkspaceMember:
+        result = await db.execute(
+            select_stmt(WorkspaceMember).where(
+                WorkspaceMember.workspace_id == workspace_id,
+                WorkspaceMember.user_id == current_user.id,
+            )
+        )
+        membership = result.scalar_one_or_none()
+
+        if membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this workspace.",
+            )
+
+        if ROLE_HIERARCHY[membership.role] < ROLE_HIERARCHY[minimum_role]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Requires at least '{minimum_role}' role in this workspace.",
+            )
+
+        return membership
+
+    return dependency

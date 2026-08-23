@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
 from app.schemas.workspace import WorkspaceCreateRequest, WorkspaceResponse
+from app.core.deps import require_workspace_role
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
@@ -45,3 +46,13 @@ async def list_my_workspaces(
         .where(WorkspaceMember.user_id == current_user.id)
     )
     return result.scalars().all()
+
+
+@router.get("/{workspace_id}/editor-check")
+async def editor_only_check(
+    membership=Depends(require_workspace_role("editor")),
+):
+    return {
+        "message": "You have editor access or higher.",
+        "your_role": membership.role,
+    }
