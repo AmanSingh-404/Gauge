@@ -7,6 +7,7 @@ from app.api.workspaces import router as workspaces_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging, log
 from app.core.database import get_db
+from app.api.api_keys import router as api_keys_router
 
 
 settings = get_settings()
@@ -15,6 +16,7 @@ configure_logging(settings.environment)
 app = FastAPI(title=settings.app_name)
 app.include_router(auth_router)
 app.include_router(workspaces_router)
+app.include_router(api_keys_router)
 
 
 @app.get("/health")
