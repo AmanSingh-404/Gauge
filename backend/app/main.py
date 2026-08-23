@@ -8,6 +8,10 @@ from app.core.config import get_settings
 from app.core.logging import configure_logging, log
 from app.core.database import get_db
 from app.api.api_keys import router as api_keys_router
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
+from app.core.rate_limit import limiter
 
 
 settings = get_settings()
@@ -17,6 +21,8 @@ app = FastAPI(title=settings.app_name)
 app.include_router(auth_router)
 app.include_router(workspaces_router)
 app.include_router(api_keys_router)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.get("/health")

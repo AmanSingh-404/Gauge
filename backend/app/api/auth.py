@@ -27,6 +27,8 @@ from app.schemas.user import (
     UserSignupRequest,
     VerifyEmailRequest,
 )
+from app.core.rate_limit import limiter
+from fastapi import Request
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -34,7 +36,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post(
     "/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED
 )
-async def signup(payload: UserSignupRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def signup(
+    request: Request, payload: UserSignupRequest, db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(select(User).where(User.email == payload.email))
     existing_user = result.scalar_one_or_none()
 
@@ -67,7 +72,10 @@ async def signup(payload: UserSignupRequest, db: AsyncSession = Depends(get_db))
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(
+    request: Request, payload: LoginRequest, db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
 
@@ -198,8 +206,9 @@ async def verify_email(payload: VerifyEmailRequest, db: AsyncSession = Depends(g
 
 
 @router.post("/forgot-password")
+@limiter.limit("5/minute")
 async def forgot_password(
-    payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+    request: Request, payload: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
