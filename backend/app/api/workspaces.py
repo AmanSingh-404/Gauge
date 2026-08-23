@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +9,7 @@ from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
 from app.schemas.workspace import WorkspaceCreateRequest, WorkspaceResponse
 from app.core.deps import require_workspace_role
+from app.schemas.workspace import InviteMemberRequest, WorkspaceMemberResponse
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])
 
@@ -56,3 +57,46 @@ async def editor_only_check(
         "message": "You have editor access or higher.",
         "your_role": membership.role,
     }
+
+
+@router.post(
+    "/{workspace_id}/members",
+    response_model=WorkspaceMemberResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def invite_member(
+    payload: InviteMemberRequest,
+    db: AsyncSession = Depends(get_db),
+    membership=Depends(require_workspace_role("owner")),
+):
+    result = await db.execute(select(User).where(User.email == payload.email))
+    invited_user = result.scalar_one_or_none()
+
+    if invited_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No user found with that email. They must sign up first.",
+        )
+
+    existing = await db.execute(
+        select(WorkspaceMember).where(
+            WorkspaceMember.workspace_id == membership.workspace_id,
+            WorkspaceMember.user_id == invited_user.id,
+        )
+    )
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already a member of this workspace.",
+        )
+
+    new_membership = WorkspaceMember(
+        user_id=invited_user.id,
+        workspace_id=membership.workspace_id,
+        role=payload.role,
+    )
+    db.add(new_membership)
+    await db.commit()
+    await db.refresh(new_membership)
+
+    return new_membership
