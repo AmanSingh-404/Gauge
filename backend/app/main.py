@@ -37,7 +37,8 @@ secure_headers = Secure.with_default_headers()
 @app.middleware("http")
 async def set_secure_headers(request, call_next):
     response = await call_next(request)
-    await secure_headers.set_headers_async(response)
+    if not request.url.path.startswith(("/docs", "/redoc", "/openapi.json")):
+        await secure_headers.set_headers_async(response)
     return response
 
 

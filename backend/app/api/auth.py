@@ -29,6 +29,7 @@ from app.schemas.user import (
 )
 from app.core.rate_limit import limiter
 from fastapi import Request
+from app.core.audit import log_audit_event
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -94,6 +95,12 @@ async def login(
             user.failed_login_attempts += 1
             if user.failed_login_attempts >= 5:
                 user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+            await log_audit_event(
+                db,
+                action="login_failed",
+                user_id=user.id,
+                ip_address=request.client.host,
+            )
             await db.commit()
 
         raise HTTPException(
@@ -115,6 +122,11 @@ async def login(
         expires_at=datetime.fromtimestamp(decoded_refresh["exp"], tz=timezone.utc),
     )
     db.add(refresh_record)
+    await db.commit()
+
+    await log_audit_event(
+        db, action="login_success", user_id=user.id, ip_address=request.client.host
+    )
     await db.commit()
 
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
