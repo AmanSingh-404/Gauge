@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
@@ -79,11 +79,30 @@ async def login(
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
 
+    if user is not None and user.locked_until is not None:
+        if user.locked_until > datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail="Account temporarily locked due to repeated failed login attempts. Try again later.",
+            )
+        else:
+            user.failed_login_attempts = 0
+            user.locked_until = None
+
     if user is None or not verify_password(payload.password, user.password_hash):
+        if user is not None:
+            user.failed_login_attempts += 1
+            if user.failed_login_attempts >= 5:
+                user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=15)
+            await db.commit()
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
         )
+
+    user.failed_login_attempts = 0
+    user.locked_until = None
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
