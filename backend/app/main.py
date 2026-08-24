@@ -1,28 +1,44 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.auth import router as auth_router
-
-from app.api.workspaces import router as workspaces_router
-from app.core.config import get_settings
-from app.core.logging import configure_logging, log
-from app.core.database import get_db
-from app.api.api_keys import router as api_keys_router
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from secure import Secure
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.api_keys import router as api_keys_router
+from app.api.auth import router as auth_router
+from app.api.workspaces import router as workspaces_router
+from app.core.config import get_settings
+from app.core.database import get_db
+from app.core.logging import configure_logging, log
 from app.core.rate_limit import limiter
-
 
 settings = get_settings()
 configure_logging(settings.environment)
 
 app = FastAPI(title=settings.app_name)
-app.include_router(auth_router)
-app.include_router(workspaces_router)
-app.include_router(api_keys_router)
+
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS — only allow the frontend origin, not "*"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # update when frontend deploys
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+secure_headers = Secure.with_default_headers()
+
+
+@app.middleware("http")
+async def set_secure_headers(request, call_next):
+    response = await call_next(request)
+    await secure_headers.set_headers_async(response)
+    return response
 
 
 @app.get("/health")
@@ -37,3 +53,8 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
     value = result.scalar()
     log.info("db_health_check_called", result=value)
     return {"status": "ok", "db_result": value}
+
+
+app.include_router(auth_router)
+app.include_router(workspaces_router)
+app.include_router(api_keys_router)
