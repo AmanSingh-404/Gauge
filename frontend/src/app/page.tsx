@@ -119,6 +119,73 @@ export default function Home() {
             </div>
           </div>
       </section>
+            {/* LOGO STRIP */}
+      <div className="border-y" style={{ borderColor: "var(--line)" }}>
+        <div className="mx-auto flex max-w-[1220px] flex-wrap items-center gap-11 px-8 py-10 text-[13.5px] font-medium uppercase tracking-wide" style={{ color: "var(--ink-2)" }}>
+          <span>Benchmarks</span>
+          <span>Claude</span>
+          <span>GPT</span>
+          <span>Gemini</span>
+          <span>+ any OpenAI-compatible model</span>
+        </div>
+      </div>
+
+      {/* METHOD */}
+      <section id="method" className="py-27">
+        <div className="mx-auto max-w-[1220px] px-8">
+          <div className="mb-13 max-w-[56ch]">
+            <div className="mb-4.5 flex items-center gap-2.5 text-[12.5px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink-2)" }}>
+              <BlockMark />
+              The Method
+            </div>
+            <h2 className="mt-4.5 text-[32px] leading-[1.04] tracking-[-0.02em] sm:text-[46px]">
+              Six checks. Every run.
+            </h2>
+            <p className="mt-4 max-w-[48ch] text-[16.5px]" style={{ color: "var(--ink-2)" }}>
+              No dashboards to babysit — every response is scored the same way, automatically.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4.5 sm:grid-cols-2 lg:grid-cols-3">
+            <Feature
+              tint="#FFF7D6"
+              iconColor="#B58A00"
+              title="Multi-model benchmarking"
+              desc="Run the same suite against Claude, GPT, and Gemini at once, ranked on one leaderboard."
+            />
+            <Feature
+              tint="#FFEFDD"
+              iconColor="var(--amber)"
+              title="Regression diffing"
+              desc="Compare prompt versions side by side and see exactly what got better or worse."
+            />
+            <Feature
+              tint="#FFE7DC"
+              iconColor="var(--orange)"
+              title="Hallucination scoring"
+              desc="A second model checks every claim against the source context, not just the wording."
+            />
+            <Feature
+              tint="#FCE3E5"
+              iconColor="var(--red)"
+              title="RAG-aware evaluation"
+              desc="Retrieval and generation are scored separately, so failures point to the right stage."
+            />
+            <Feature
+              tint="#FFF7D6"
+              iconColor="#B58A00"
+              title="CI-gated merges"
+              desc="A GitHub App runs your suite on every pull request and comments the results directly."
+            />
+            <Feature
+              tint="#FFEFDD"
+              iconColor="var(--amber)"
+              title="Human review queue"
+              desc="Low-confidence scores route to a person, and their labels sharpen the next run."
+            />
+          </div>
+        </div>
+      </section>
     </>
   );
 }
@@ -154,6 +221,37 @@ function ReportRow({
         {label}
       </span>
       <span className="font-medium">{value}</span>
+    </div>
+  );
+}
+function Feature({
+  tint,
+  iconColor,
+  title,
+  desc,
+}: {
+  tint: string;
+  iconColor: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div
+      className="rounded-[14px] border bg-white p-6.5 transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_20px_40px_-22px_rgba(31,20,10,0.25)]"
+      style={{ borderColor: "var(--line)" }}
+    >
+      <div
+        className="mb-4 flex h-9.5 w-9.5 items-center justify-center rounded-[9px]"
+        style={{ background: tint, color: iconColor }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" className="h-4.5 w-4.5">
+          <path d="M4 12l5 5L20 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <h3 className="mb-2 text-[16.5px] font-semibold">{title}</h3>
+      <p className="text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
+        {desc}
+      </p>
     </div>
   );
 }
