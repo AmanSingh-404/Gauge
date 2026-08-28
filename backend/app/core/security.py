@@ -1,6 +1,7 @@
-import bcrypt
 import hashlib
 import secrets
+
+import bcrypt
 
 
 def hash_token(token: str) -> str:

@@ -1,19 +1,16 @@
 import uuid
+import uuid as uuid_module
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Path, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy import select
+from sqlalchemy import select as select_stmt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.jwt import decode_token
 from app.models.user import User
-import uuid as uuid_module
-
-from fastapi import Path
-from sqlalchemy import select as select_stmt
-
 from app.models.workspace_member import WorkspaceMember
 
 ROLE_HIERARCHY = {"viewer": 0, "editor": 1, "owner": 2}

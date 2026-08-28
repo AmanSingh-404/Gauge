@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audit import log_audit_event
 from app.core.database import get_db
 from app.core.jwt import (
     create_access_token,
@@ -14,6 +15,7 @@ from app.core.jwt import (
     decode_token,
 )
 from app.core.mail import send_email
+from app.core.rate_limit import limiter
 from app.core.security import hash_password, hash_token, verify_password
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
@@ -27,9 +29,6 @@ from app.schemas.user import (
     UserSignupRequest,
     VerifyEmailRequest,
 )
-from app.core.rate_limit import limiter
-from fastapi import Request
-from app.core.audit import log_audit_event
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -84,7 +83,10 @@ async def login(
         if user.locked_until > datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_423_LOCKED,
-                detail="Account temporarily locked due to repeated failed login attempts. Try again later.",
+                detail=(
+                    "Account temporarily locked due to repeated failed login "
+                    "attempts. Try again later."
+                ),
             )
         else:
             user.failed_login_attempts = 0

@@ -1,4 +1,5 @@
 ﻿from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from slowapi import Limiter
 from slowapi.util import get_remote_address
