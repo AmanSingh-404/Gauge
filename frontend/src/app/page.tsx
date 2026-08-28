@@ -251,6 +251,89 @@ export default function Home() {
           </div>
         </div>
       </section>
+            {/* STATS */}
+      <section id="stats" className="pb-27">
+        <div className="mx-auto max-w-[1220px] px-8">
+          <div className="mb-9 flex items-center gap-2.5 text-[12.5px] font-semibold uppercase tracking-widest" style={{ color: "var(--ink-2)" }}>
+            <BlockMark />
+            In Numbers
+          </div>
+          <div className="grid grid-cols-1 border-t sm:grid-cols-3" style={{ borderColor: "var(--line)" }}>
+            <Stat n="3" l="model providers benchmarked in a single run" last={false} />
+            <Stat n="<900ms" l="median time to score one response" last={false} />
+            <Stat n="1 line" l="of config to gate a pull request on regression" last={true} />
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="pb-27">
+        <div className="mx-auto max-w-[1220px] px-8">
+          <div
+            className="relative overflow-hidden rounded-[22px] px-6 py-24 text-center sm:px-10"
+            style={{ background: "var(--dark)" }}
+          >
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(ellipse 520px 340px at 50% 0%, rgba(250,82,15,0.28), transparent 65%)",
+              }}
+            />
+            <div className="relative flex items-center justify-center gap-2.5 text-[12.5px] font-semibold uppercase tracking-widest" style={{ color: "#B4B3AE" }}>
+              <BlockMark />
+              Stop Guessing
+            </div>
+            <h2 className="relative mx-auto mt-5 max-w-[16ch] text-[34px] leading-[1.04] tracking-[-0.03em] text-white sm:text-[60px]">
+              Give your prompts a test suite, not a prayer.
+            </h2>
+            <div className="relative flex flex-wrap justify-center gap-3.5">
+              
+              <a href="#"
+                className="rounded-[7px] px-6 py-3.5 text-[13.5px] font-semibold uppercase tracking-wider text-white"
+                style={{
+                  background: "linear-gradient(100deg, var(--orange), var(--red))",
+                  boxShadow: "0 10px 26px -12px rgba(250,82,15,0.55)",
+                }}
+              >
+                Run an Eval
+              </a>
+              
+              <a href="#"
+                className="rounded-[7px] border px-6 py-3.5 text-[13.5px] font-semibold uppercase tracking-wider text-white"
+                style={{ borderColor: "var(--line-dark)" }}
+              >
+                Read the Docs
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SUNSET STRIPE */}
+      <div
+        className="h-2.5"
+        style={{ background: "linear-gradient(90deg, var(--yellow), var(--amber), var(--orange), var(--red))" }}
+      />
+
+      {/* FOOTER */}
+      <footer className="py-11">
+        <div className="mx-auto flex max-w-[1220px] flex-wrap items-center justify-between gap-4.5 px-8">
+          <div className="flex items-center gap-2.5 text-[16px] font-semibold uppercase tracking-wide">
+            <BlockMark />
+            Gauge
+          </div>
+          <div className="flex gap-7 text-[12.5px] font-medium uppercase tracking-wide" style={{ color: "var(--ink-2)" }}>
+            <a href="#method" className="hover:opacity-70">Method</a>
+            <a href="#ci" className="hover:opacity-70">CI</a>
+            <a href="#" className="hover:opacity-70">Docs</a>
+            <a href="#" className="hover:opacity-70">GitHub</a>
+          </div>
+          <div className="text-[12px]" style={{ color: "var(--ink-2)" }}>
+            © 2026 Gauge — built by Aman Singh
+          </div>
+        </div>
+      </footer>
     </>
   );
 }
@@ -346,6 +429,29 @@ function DarkReportRow({
       <span className="font-medium" style={{ color: warn ? "var(--orange)" : "#fff" }}>
         {value}
       </span>
+    </div>
+  );
+}
+function Stat({ n, l, last }: { n: string; l: string; last: boolean }) {
+  return (
+    <div
+      className={`border-b px-8 py-11 sm:border-r ${last ? "sm:border-r-0" : ""}`}
+      style={{ borderColor: "var(--line)" }}
+    >
+      <div
+        className="text-[38px] tracking-[-0.02em] sm:text-[56px]"
+        style={{
+          background: "linear-gradient(100deg, var(--ink), var(--orange))",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+        }}
+      >
+        {n}
+      </div>
+      <div className="mt-2 max-w-[26ch] text-[14px]" style={{ color: "var(--ink-2)" }}>
+        {l}
+      </div>
     </div>
   );
 }
