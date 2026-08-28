@@ -1,13 +1,12 @@
 """init
 
 Revision ID: d4620670f801
-Revises: 
+Revises:
 Create Date: 2026-08-21 00:40:28.320305
 
 """
 
 from typing import Sequence, Union
-
 
 # revision identifiers, used by Alembic.
 revision: str = "d4620670f801"
