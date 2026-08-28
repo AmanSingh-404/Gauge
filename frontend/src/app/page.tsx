@@ -77,6 +77,47 @@ export default function Home() {
             </div>
           </div>
         </div>
+                  <div className="relative mt-19 pb-12">
+            {/* Floating badges */}
+            <div className="absolute left-[4%] top-[6%] hidden -rotate-6 items-center gap-2 rounded-[10px] border bg-white px-3.5 py-2.5 text-[11.5px] font-medium shadow-[0_16px_30px_-14px_rgba(31,20,10,0.24)] sm:flex" style={{ borderColor: "var(--line)" }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--good)" }} />
+              Correctness +3.1%
+            </div>
+            <div className="absolute right-[4%] top-0 hidden rotate-5 items-center gap-2 rounded-[10px] border bg-white px-3.5 py-2.5 text-[11.5px] font-medium shadow-[0_16px_30px_-14px_rgba(31,20,10,0.24)] sm:flex" style={{ borderColor: "var(--line)" }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--orange)" }} />
+              Hallucination flagged
+            </div>
+            <div className="absolute bottom-[2%] left-[8%] hidden rotate-4 items-center gap-2 rounded-[10px] border bg-white px-3.5 py-2.5 text-[11.5px] font-medium shadow-[0_16px_30px_-14px_rgba(31,20,10,0.24)] sm:flex" style={{ borderColor: "var(--line)" }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--amber)" }} />
+              3 models compared
+            </div>
+
+            {/* Eval report card */}
+            <div
+              className="mx-auto max-w-[540px] -rotate-[1.2deg] rounded-[14px] border bg-white px-6 pb-5 pt-6 shadow-[0_40px_80px_-34px_rgba(31,20,10,0.28)]"
+              style={{ borderColor: "var(--line)" }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: "var(--line)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ background: "var(--line)" }} />
+                  <span className="h-2 w-2 rounded-full" style={{ background: "var(--line)" }} />
+                </div>
+                <div className="text-[11px] uppercase tracking-wide" style={{ color: "var(--ink-2)" }}>
+                  support-agent-v4
+                </div>
+              </div>
+              <div className="mb-3.5 text-[16.5px] font-semibold">Eval Report</div>
+
+              <ReportRow label="Correctness" value="91% → 94%" good />
+              <ReportRow label="Hallucination" value="2% → 5%" warn />
+              <ReportRow label="Latency" value="820ms → 780ms" good />
+
+              <div className="mt-3 border-t pt-3 text-[12.5px] font-semibold" style={{ borderColor: "var(--line)", color: "var(--good)" }}>
+                ✓ Below threshold — merge allowed
+              </div>
+            </div>
+          </div>
       </section>
     </>
   );
@@ -90,5 +131,29 @@ function BlockMark() {
       <span style={{ background: "var(--orange)" }} />
       <span style={{ background: "var(--red)" }} />
     </span>
+  );
+}
+function ReportRow({
+  label,
+  value,
+  good,
+  warn,
+}: {
+  label: string;
+  value: string;
+  good?: boolean;
+  warn?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between border-b border-dashed py-2.5 text-[13.5px] last:border-b-0" style={{ borderColor: "var(--line)" }}>
+      <span className="flex items-center gap-2" style={{ color: "var(--ink-2)" }}>
+        <span
+          className="h-1.5 w-1.5 rounded-full"
+          style={{ background: good ? "var(--good)" : warn ? "var(--orange)" : "var(--line)" }}
+        />
+        {label}
+      </span>
+      <span className="font-medium">{value}</span>
+    </div>
   );
 }
