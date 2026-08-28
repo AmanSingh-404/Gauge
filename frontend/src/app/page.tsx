@@ -186,6 +186,71 @@ export default function Home() {
           </div>
         </div>
       </section>
+            {/* CI INTEGRATION */}
+      <section id="ci" className="pb-27">
+        <div className="mx-auto max-w-[1220px] px-8">
+          <div
+            className="rounded-[18px] px-6 py-22 sm:px-12"
+            style={{ background: "var(--dark)", color: "#fff" }}
+          >
+            <div className="grid grid-cols-1 items-center gap-15 lg:grid-cols-2">
+              <div>
+                <div className="flex items-center gap-2.5 text-[12.5px] font-semibold uppercase tracking-widest" style={{ color: "#B4B3AE" }}>
+                  <BlockMark />
+                  CI Integration
+                </div>
+                <h2 className="mt-4.5 text-[28px] leading-[1.06] tracking-[-0.02em] sm:text-[42px]">
+                  Every pull request
+                  <br />
+                  gets a report card.
+                </h2>
+                <p className="mt-4.5 max-w-[44ch] text-[16px]" style={{ color: "#ADACA7" }}>
+                  Touch a prompt file, open a PR, and Gauge runs the linked suite against the old and new version before anyone reviews the code.
+                </p>
+                <p className="mt-3.5 max-w-[44ch] text-[16px]" style={{ color: "#ADACA7" }}>
+                  Set a regression threshold and it blocks the merge outright — the same way a failing test would.
+                </p>
+                
+                <a href="#"
+                  className="mt-5 inline-flex rounded-[7px] px-6 py-3.5 text-[13.5px] font-semibold uppercase tracking-wider text-white"
+                  style={{
+                    background: "linear-gradient(100deg, var(--orange), var(--red))",
+                    boxShadow: "0 10px 26px -12px rgba(250,82,15,0.55)",
+                  }}
+                >
+                  See the Docs
+                </a>
+              </div>
+
+              <div
+                className="rounded-[12px] border px-6 pb-5 pt-6"
+                style={{ background: "var(--dark-surface)", borderColor: "var(--line-dark)" }}
+              >
+                <div
+                  className="mb-4 flex items-center justify-between border-b pb-3.5 text-[11.5px] uppercase tracking-wide"
+                  style={{ borderColor: "var(--line-dark)", color: "#8B8A85" }}
+                >
+                  <span>gauge-bot</span>
+                  <span>support_agent_v4.txt</span>
+                </div>
+                <div className="mb-3.5 text-[16.5px] font-semibold">Eval Report</div>
+
+                <DarkReportRow label="Correctness" value="91% → 94%" good />
+                <DarkReportRow label="Hallucination rate" value="2% → 5%" warn />
+                <DarkReportRow label="Latency" value="820ms → 780ms" good />
+                <DarkReportRow label="Cost / 1k runs" value="$1.35 → $1.20" good />
+
+                <div
+                  className="mt-3.5 border-t pt-3.5 text-[13.5px] font-semibold"
+                  style={{ borderColor: "var(--line-dark)", color: "#69D19A" }}
+                >
+                  2 cases regressed — below threshold, merge allowed.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
@@ -252,6 +317,35 @@ function Feature({
       <p className="text-[14.5px] leading-relaxed" style={{ color: "var(--ink-2)" }}>
         {desc}
       </p>
+    </div>
+  );
+}
+function DarkReportRow({
+  label,
+  value,
+  good,
+  warn,
+}: {
+  label: string;
+  value: string;
+  good?: boolean;
+  warn?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between border-b py-2 text-[13.5px] last:border-b-0"
+      style={{ borderColor: "rgba(255,255,255,0.08)" }}
+    >
+      <span className="flex items-center gap-2" style={{ color: "#ADACA7" }}>
+        <span
+          className="h-1.5 w-1.5 rounded-full"
+          style={{ background: good ? "var(--good)" : warn ? "var(--orange)" : "var(--line)" }}
+        />
+        {label}
+      </span>
+      <span className="font-medium" style={{ color: warn ? "var(--orange)" : "#fff" }}>
+        {value}
+      </span>
     </div>
   );
 }
