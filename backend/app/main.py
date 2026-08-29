@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.api_keys import router as api_keys_router
 from app.api.auth import router as auth_router
+from app.api.prompts import router as prompts_router
 from app.api.test_suites import router as test_suites_router
 from app.api.workspaces import router as workspaces_router
 from app.core.config import get_settings
@@ -32,6 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(test_suites_router)
+app.include_router(prompts_router)
 
 secure_headers = Secure.with_default_headers()
 
