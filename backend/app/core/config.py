@@ -39,9 +39,8 @@ class Settings(BaseSettings):
     mail_port: int = 587
 
     # LLM providers
-    anthropic_api_key: str = ""
-    openai_api_key: str = ""
-    google_api_key: str = ""
+    mistral_api_key: str = ""
+    groq_api_key: str = ""
 
     # Rate limiting
     rate_limit_login_per_minute: int = 5
