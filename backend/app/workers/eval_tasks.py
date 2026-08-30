@@ -10,6 +10,8 @@ from app.models.eval_run import EvalRun
 from app.models.prompt_version import PromptVersion
 from app.models.test_case import TestCase
 from app.services.llm.base import get_adapter
+from app.services.scoring.correctness import score_correctness
+from app.services.scoring.hallucination import score_hallucination
 
 
 async def _run_eval(run_id: str) -> None:
@@ -42,6 +44,20 @@ async def _run_eval(run_id: str) -> None:
                     input_text=case.input,
                     model=run.model,
                 )
+
+                correctness = None
+                hallucination = None
+
+                if case.expected_output:
+                    correctness = await score_correctness(
+                        expected_output=case.expected_output,
+                        actual_output=response.text,
+                    )
+                    hallucination = await score_hallucination(
+                        context=case.expected_output,
+                        response_text=response.text,
+                    )
+
                 eval_result = EvalResult(
                     run_id=run.id,
                     test_case_id=case.id,
@@ -49,6 +65,8 @@ async def _run_eval(run_id: str) -> None:
                     latency_ms=response.latency_ms,
                     input_tokens=response.input_tokens,
                     output_tokens=response.output_tokens,
+                    correctness_score=correctness,
+                    hallucination_score=hallucination,
                 )
                 db.add(eval_result)
 

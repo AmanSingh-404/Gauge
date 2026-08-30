@@ -33,6 +33,8 @@ class EvalResultResponse(BaseModel):
     latency_ms: int
     input_tokens: int
     output_tokens: int
+    correctness_score: float | None
+    hallucination_score: float | None
 
     class Config:
         from_attributes = True
