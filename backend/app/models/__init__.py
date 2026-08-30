@@ -1,5 +1,7 @@
 from app.models.api_key import ApiKey  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.eval_result import EvalResult  # noqa: F401
+from app.models.eval_run import EvalRun  # noqa: F401
 from app.models.prompt import Prompt  # noqa: F401
 from app.models.prompt_version import PromptVersion  # noqa: F401
 from app.models.refresh_token import RefreshToken  # noqa: F401
