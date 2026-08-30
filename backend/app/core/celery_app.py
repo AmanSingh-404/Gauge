@@ -19,5 +19,3 @@ celery_app.conf.update(
 )
 
 celery_app.autodiscover_tasks(["app.workers"])
-
-from app.workers import tasks  # noqa: E402,F401  -- ensures tasks are registered
