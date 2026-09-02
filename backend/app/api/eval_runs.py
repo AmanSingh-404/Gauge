@@ -26,12 +26,21 @@ async def trigger_eval_run(
     db: AsyncSession = Depends(get_db),
     membership=Depends(require_workspace_role("editor")),
 ):
+    if payload.idempotency_key:
+        existing = await db.execute(
+            select(EvalRun).where(EvalRun.idempotency_key == payload.idempotency_key)
+        )
+        existing_run = existing.scalar_one_or_none()
+        if existing_run is not None:
+            return existing_run
+
     new_run = EvalRun(
         suite_id=payload.suite_id,
         prompt_version_id=payload.prompt_version_id,
         model=payload.model,
         provider=payload.provider,
         status="pending",
+        idempotency_key=payload.idempotency_key,
     )
     db.add(new_run)
     await db.commit()

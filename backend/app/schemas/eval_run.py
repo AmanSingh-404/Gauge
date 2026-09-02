@@ -9,6 +9,7 @@ class EvalRunCreateRequest(BaseModel):
     prompt_version_id: uuid.UUID
     model: str
     provider: str
+    idempotency_key: str | None = None
 
 
 class EvalRunResponse(BaseModel):
