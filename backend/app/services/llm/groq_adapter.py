@@ -1,6 +1,7 @@
 import time
 
 from groq import AsyncGroq
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.core.config import get_settings
 from app.services.llm.base import LLMAdapter, LLMResponse
@@ -12,6 +13,11 @@ class GroqAdapter(LLMAdapter):
     def __init__(self) -> None:
         self.client = AsyncGroq(api_key=settings.groq_api_key)
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True,
+    )
     async def generate(self, prompt: str, input_text: str, model: str) -> LLMResponse:
         start = time.perf_counter()
 

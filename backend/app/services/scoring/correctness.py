@@ -1,5 +1,7 @@
 import math
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from app.core.config import get_settings
 from app.services.llm.mistral_adapter import MistralAdapter
 
@@ -15,6 +17,11 @@ def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     return dot_product / (magnitude_a * magnitude_b)
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    reraise=True,
+)
 async def score_correctness(expected_output: str, actual_output: str) -> float:
     adapter = MistralAdapter()
     response = await adapter.client.embeddings.create_async(

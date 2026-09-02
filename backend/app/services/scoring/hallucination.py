@@ -1,5 +1,7 @@
 import json
 
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from app.services.llm.mistral_adapter import MistralAdapter
 
 JUDGE_PROMPT = """You are a strict fact-checker. You will be given a CONTEXT and a RESPONSE.
@@ -13,6 +15,11 @@ A score of 1.0 means the response is entirely fabricated or contradicts the cont
 """
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    reraise=True,
+)
 async def score_hallucination(context: str, response_text: str) -> float:
     adapter = MistralAdapter()
     judge_input = f"CONTEXT:\n{context}\n\nRESPONSE:\n{response_text}"
