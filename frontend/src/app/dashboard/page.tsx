@@ -64,12 +64,17 @@ export default function DashboardPage() {
       {workspaces && workspaces.length > 0 && (
         <div className="mt-8 space-y-3">
           {workspaces.map((ws) => (
-            <div key={ws.id} className="rounded-[10px] border px-5 py-4" style={{ borderColor: "var(--line)" }}>
+            <Link
+              key={ws.id}
+              href={`/workspaces/${ws.id}/suites`}
+              className="block rounded-[10px] border px-5 py-4 transition-colors hover:border-[var(--orange)]"
+              style={{ borderColor: "var(--line)" }}
+            >
               <div className="text-[16px] font-medium">{ws.name}</div>
               <div className="mt-1 text-[12.5px] uppercase tracking-wide" style={{ color: "var(--ink-2)" }}>
                 {ws.plan_tier} plan
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
