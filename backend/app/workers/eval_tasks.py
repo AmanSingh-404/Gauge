@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, engine
 from app.models.eval_result import EvalResult
 from app.models.eval_run import EvalRun
 from app.models.prompt_version import PromptVersion
@@ -77,6 +77,8 @@ async def _run_eval(run_id: str) -> None:
         finally:
             run.finished_at = datetime.now(timezone.utc)
             await db.commit()
+
+    await engine.dispose()
 
 
 @celery_app.task(name="run_eval_task")
